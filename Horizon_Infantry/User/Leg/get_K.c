@@ -13,12 +13,21 @@ void Board_to_board_send(boardTxData_t *send, float yaw)
 
 void Board_to_board_recv(boardRxData_t *recv, uint8_t *data)
 {
-    // memcpy(recv, data, 8);
-    recv->dataNeaten.ch2 = data[1] << 8 | data[0];
-    recv->dataNeaten.ch3 = data[3] << 8 | data[2];
-    recv->dataNeaten.s1  = data[4];
-    recv->dataNeaten.s2  = data[5];
-    recv->dataNeaten.pitch = data[7] << 8 | data[6];
+    // memcpy(recv->rxData, data, sizeof(recv->rxData));
+    uint64_t packed = 0;
+    for (int i = 0; i < 8; i++) {
+        packed |= (uint64_t)data[i] << (i * 8);
+    }
+    uint16_t u_ch2 = (packed >> 0)  & 0x07FF;
+    uint16_t u_ch3 = (packed >> 11) & 0x07FF;
+    uint16_t u_dir = (packed >> 22) & 0x07FF;
+    recv->dataNeaten.ch2 = (int16_t)(u_ch2 <= 1023 ? u_ch2 : u_ch2 - 2048);
+    recv->dataNeaten.ch3 = (int16_t)(u_ch3 <= 1023 ? u_ch3 : u_ch3 - 2048);
+    recv->dataNeaten.dir = (int16_t)(u_dir <= 1023 ? u_dir : u_dir - 2048);
+    recv->dataNeaten.pitch = (int16_t)((packed >> 33) & 0xFFFF);
+    recv->dataNeaten.s1 = (packed >> 49) & 0x03;
+    recv->dataNeaten.s2 = (packed >> 51) & 0x03;
+
 
     WHW_V_DBUS.Remote.S1_u8 = recv->dataNeaten.s1;
     WHW_V_DBUS.Remote.S1_u8 = recv->dataNeaten.s1;

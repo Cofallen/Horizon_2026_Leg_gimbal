@@ -15,9 +15,11 @@ void RobotTask(uint8_t mode,
         } break;
         case 2://云台
         {
-            switch (DBUS->Remote.S1_u8)
+            switch (DBUS->Remote.S1_u8 )
             {
             case 1:
+            case 2:
+            case 3:
             {
                 CONTAL->HEAD.Pitch -= (float) ((DBUS->Remote.CH3_int16)) * 0.0003f;
                 CONTAL->HEAD.Pitch = (CONTAL->HEAD.Pitch > CONTAL->HEAD.Pitch_MAX) ? CONTAL->HEAD.Pitch_MAX : CONTAL->HEAD.Pitch;

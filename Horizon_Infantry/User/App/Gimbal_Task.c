@@ -96,7 +96,15 @@ uint8_t gimbal_task(CONTAL_Typedef *CONTAL, MOTOR_Typedef *MOTOR, IMU_Data_t *IM
     DM_send_iq(&hcan1, 1, MOTOR->DM4310_Yaw.PID_S.Output);
     DM_send_iq(&hcan1, 2, MOTOR->DM4310_Pitch.PID_S.Output);
 
-    DJI_Current_Ctrl(&hcan1, 0x200, 300, -300, 0, 0);
+    if (WHW_V_DBUS.Remote.S1_u8 == 2)
+    {
+        DJI_Current_Ctrl(&hcan1, 0x200, 300, -300, 0, 0);
+    }
+    else
+    {
+        DJI_Current_Ctrl(&hcan1, 0x200, 0, 0, 0, 0);
+    }
+    
     VOFA_justfloat(MOTOR->DM4310_Yaw.PID_P.Err,
                     IMU_Data.YawTotalAngle,
                     MOTOR->DM4310_Yaw.DATA.Aim,

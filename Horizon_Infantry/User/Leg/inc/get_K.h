@@ -18,11 +18,12 @@ typedef union
     {
         int16_t ch2;
         int16_t ch3;
+        int16_t dir;
+        int16_t pitch;  // 100倍
         uint8_t s1;
         uint8_t s2;
-        int16_t pitch;      // 应/100
     } dataNeaten;
-    uint8_t rxData[8];
+    // uint8_t rxData[8];
 }boardRxData_t;
 
 void Board_to_board_send(boardTxData_t *send, float yaw);
