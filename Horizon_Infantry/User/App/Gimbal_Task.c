@@ -4,6 +4,7 @@
 #include "MY_Define.h"
 #include "chassisL.h"
 #include "VOFA.h"
+#include "get_K.h"
 
 uint8_t MOTOR_PID_Gimbal_INIT(MOTOR_Typedef *motor)
 {
@@ -56,6 +57,7 @@ uint8_t gimbal_task(CONTAL_Typedef *CONTAL, MOTOR_Typedef *MOTOR, IMU_Data_t *IM
     MOTOR->DM4310_Pitch.DATA.Aim = CONTAL->HEAD.Pitch;
     MOTOR->DM4310_Yaw.DATA.Aim   = CONTAL->HEAD.Yaw;
 
+    // 平常使用
     PID_Calculate(&MOTOR->DM4310_Pitch.PID_P, 
                    IMU_Data.pitch,
                    MOTOR->DM4310_Pitch.DATA.Aim);
@@ -69,10 +71,32 @@ uint8_t gimbal_task(CONTAL_Typedef *CONTAL, MOTOR_Typedef *MOTOR, IMU_Data_t *IM
     PID_Calculate(&MOTOR->DM4310_Yaw.PID_S,
                    QEKF_INS.Gyro[2] * 50.0f,
                    MOTOR->DM4310_Yaw.PID_P.Output);
+
+    float board_pitch = boardRxData.dataNeaten.pitch * 0.01f;
+    if (fabsf(board_pitch) > 30.0f)
+    {
+        // 倒地自启使用，防止头疯
+        PID_Calculate(&MOTOR->DM4310_Pitch.PID_P, 
+                    MOTOR->DM4310_Pitch.DATA.pos_infinite * 57.3f,
+                    MOTOR->DM4310_Pitch.DATA.pos_infinite * 57.3f);
+        PID_Calculate(&MOTOR->DM4310_Pitch.PID_S, 
+                    MOTOR->DM4310_Yaw.DATA.vel * 57.3f,
+                    MOTOR->DM4310_Pitch.PID_P.Output);
+
+        PID_Calculate(&MOTOR->DM4310_Yaw.PID_P,
+                    MOTOR->DM4310_Yaw.DATA.pos_infinite * 57.3f,
+                    MOTOR->DM4310_Yaw.DATA.pos_infinite * 57.3f);
+        PID_Calculate(&MOTOR->DM4310_Yaw.PID_S,
+                    MOTOR->DM4310_Yaw.DATA.vel * 57.3f,
+                    MOTOR->DM4310_Yaw.PID_P.Output);
+    }
+    
+    
     
     DM_send_iq(&hcan1, 1, MOTOR->DM4310_Yaw.PID_S.Output);
     DM_send_iq(&hcan1, 2, MOTOR->DM4310_Pitch.PID_S.Output);
 
+    DJI_Current_Ctrl(&hcan1, 0x200, 300, -300, 0, 0);
     VOFA_justfloat(MOTOR->DM4310_Yaw.PID_P.Err,
                     IMU_Data.YawTotalAngle,
                     MOTOR->DM4310_Yaw.DATA.Aim,

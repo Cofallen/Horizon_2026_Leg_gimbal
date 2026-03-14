@@ -18,6 +18,7 @@ void Board_to_board_recv(boardRxData_t *recv, uint8_t *data)
     recv->dataNeaten.ch3 = data[3] << 8 | data[2];
     recv->dataNeaten.s1  = data[4];
     recv->dataNeaten.s2  = data[5];
+    recv->dataNeaten.pitch = data[7] << 8 | data[6];
 
     WHW_V_DBUS.Remote.S1_u8 = recv->dataNeaten.s1;
     WHW_V_DBUS.Remote.S1_u8 = recv->dataNeaten.s1;

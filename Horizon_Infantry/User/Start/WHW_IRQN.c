@@ -211,6 +211,12 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
             case 0x1A:     // H7
                 Board_to_board_recv(&boardRxData, rx_data);
                break;
+            case 0x201:
+                RUI_F_MOTOR_CAN_RX_3508RM(&ALL_MOTOR.DJI_3508_Shoot_L, rx_data);
+                break;
+            case 0x202:
+                RUI_F_MOTOR_CAN_RX_3508RM(&ALL_MOTOR.DJI_3508_Shoot_R, rx_data);
+                break;
         }
 			
 	}

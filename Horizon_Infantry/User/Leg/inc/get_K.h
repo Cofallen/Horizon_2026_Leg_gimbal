@@ -20,6 +20,7 @@ typedef union
         int16_t ch3;
         uint8_t s1;
         uint8_t s2;
+        int16_t pitch;      // 应/100
     } dataNeaten;
     uint8_t rxData[8];
 }boardRxData_t;
