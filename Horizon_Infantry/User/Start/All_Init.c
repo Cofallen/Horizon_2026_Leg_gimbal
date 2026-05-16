@@ -70,6 +70,8 @@ float voltage;
 //功率限制
 model_t model;
 
+uint8_t Referee_Rx_Buf[2][REFEREE_RXFRAME_LENGTH];
+
 uint8_t flag2;
 void Everying_Init(void)
 {

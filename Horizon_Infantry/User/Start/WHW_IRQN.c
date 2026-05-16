@@ -165,14 +165,14 @@ void StartRootTask(void const * argument)
 
     // //使用基准电压来校准
     // init_vrefint_reciprocal();
-    AIActor_Init(&g_actor);
+    // AIActor_Init(&g_actor);
 
     for(;;)
     {
         RUI_V_CONTAL.DWT_TIME.Move_Dtime = DWT_GetDeltaT(&RUI_V_CONTAL.DWT_TIME.Move_DWT_Count);
         // ppo_actor_forward(obs, action);
-        AIActor_Run(&g_actor, obs);
-        action[0] = AIActor_GetOutput(&g_actor, 0);
+        // AIActor_Run(&g_actor, obs);
+        // action[0] = AIActor_GetOutput(&g_actor, 0);
         osDelay(1);
     }
 }
@@ -219,10 +219,10 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
                 Board_to_board_recv(&boardRxData, rx_data);
                break;
             case 0x201:
-                RUI_F_MOTOR_CAN_RX_3508RM(&ALL_MOTOR.DJI_3508_Shoot_L, rx_data);
+                RUI_F_MOTOR_CAN_RX_3508RM(&ALL_MOTOR.DJI_3508_Shoot_L.DATA, rx_data);
                 break;
             case 0x202:
-                RUI_F_MOTOR_CAN_RX_3508RM(&ALL_MOTOR.DJI_3508_Shoot_R, rx_data);
+                RUI_F_MOTOR_CAN_RX_3508RM(&ALL_MOTOR.DJI_3508_Shoot_R.DATA, rx_data);
                 break;
         }
 			
@@ -267,6 +267,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 void BSP_UART_IRQHandler(UART_HandleTypeDef *huart)
 {
+    uint8_t *pData = huart->pRxBuffPtr;
     if(huart->Instance ==USART3)//遥控接收串口
     {
         if (RESET != __HAL_UART_GET_FLAG(&huart3, UART_FLAG_IDLE))
@@ -288,16 +289,10 @@ void BSP_UART_IRQHandler(UART_HandleTypeDef *huart)
 
     if(huart->Instance ==USART6)//裁判系统串口
     {
-		uint8_t data_length_6;
-        if (RESET != __HAL_UART_GET_FLAG(&huart6, UART_FLAG_IDLE))
-        {
-            __HAL_UART_CLEAR_IDLEFLAG(&huart6);  //清除空闲中断标志（否则会一直不断进入中断）
-            // 下面进行空闲中断相关处理
-            HAL_UART_DMAStop(&huart6);//暂时停止本次DMA传输，进行数据
-            data_length_6  = BUFFER_SIZE_6 - __HAL_DMA_GET_COUNTER(&hdma_usart6_rx);//计算接收到的数据长度
-		    
-            // HAL_UART_Receive_DMA(&huart6, LQR_send_data.data, sizeof(LQR_send_data.data));  //重启开始DMA传输
-        }
+		uint8_t *next_buf = (pData == Referee_Rx_Buf[0]) ? Referee_Rx_Buf[1] : Referee_Rx_Buf[0];
+        HAL_UARTEx_ReceiveToIdle_DMA(huart, next_buf, REFEREE_RXFRAME_LENGTH);
+        __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);//关闭 DMA 半传中断
+        Referee_System_Frame_Update(pData, 256);
     }
 
     if(huart->Instance ==USART1)//调试串口
