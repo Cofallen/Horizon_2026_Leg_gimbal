@@ -66,6 +66,8 @@
 #include "vmc.h"
 #include "get_K.h"
 #include "Gimbal_Task.h"
+#include "ppo_actor.h"
+#include "actor_xcude.h"
 
 uint8_t move_G, move_S, move_C, move_P;
 float t1,t2,dt;
@@ -134,7 +136,7 @@ void StartIMUTask(void const * argument)
     const float imu_temp_PID[3] = TEMPERATURE_PID;
     PID_init(&imu_temp, PID_POSITION, imu_temp_PID,
              TEMPERATURE_PID_MAX_OUT, TEMPERATURE_PID_MAX_IOUT);
-    IMU_QuaternionEKF_Init(10, 0.001f, 10000000, 1, 0.001f,0); //ekf初始化
+    IMU_QuaternionEKF_Init(10, 0.001f, 10000000, 0.9996, 0.001f,0.1); //ekf初始化
     HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
     while(BMI088_init()){}
 
@@ -151,6 +153,9 @@ void StartIMUTask(void const * argument)
         osDelayUntil(&currentTimeIMU, 1);
     }
 }
+float obs[INPUT_DIM] = {0.01, 0.0002, 0.0003, 0.0004};
+float action[OUTPUT_DIM] = {0};
+static AIActor g_actor;
 
 //整车监控任务
 void StartRootTask(void const * argument)
@@ -160,13 +165,15 @@ void StartRootTask(void const * argument)
 
     // //使用基准电压来校准
     // init_vrefint_reciprocal();
+    AIActor_Init(&g_actor);
 
     for(;;)
     {
-        // RUI_F_ROOT(&RUI_ROOT_STATUS, &WHW_V_DBUS, &ALL_MOTOR, &CAPDATE.GET);
-        // voltage = get_battery_voltage();
-
-        osDelayUntil(&currentTimeRoot, 5);
+        RUI_V_CONTAL.DWT_TIME.Move_Dtime = DWT_GetDeltaT(&RUI_V_CONTAL.DWT_TIME.Move_DWT_Count);
+        // ppo_actor_forward(obs, action);
+        AIActor_Run(&g_actor, obs);
+        action[0] = AIActor_GetOutput(&g_actor, 0);
+        osDelay(1);
     }
 }
 

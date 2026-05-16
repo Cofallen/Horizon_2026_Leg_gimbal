@@ -137,6 +137,15 @@ virtualFolder:
                   files:
                     - path: ../USB_DEVICE/Target/usbd_conf.c
                   folders: []
+            - name: X-CUBE-AI
+              files: []
+              folders:
+                - name: App
+                  files:
+                    - path: ../X-CUBE-AI/App/network.c
+                    - path: ../X-CUBE-AI/App/network_data.c
+                    - path: ../X-CUBE-AI/App/network_data_params.c
+                  folders: []
         - name: MDK-ARM
           files:
             - path: ../MDK-ARM/startup_stm32f407xx.s
@@ -262,6 +271,16 @@ virtualFolder:
         - path: ../User/Leg/observe.c
         - path: ../User/Leg/vmc.c
         - path: ../User/Leg/get_K.c
+        - path: ../User/Leg/ppo_actor.c
+        - path: ../User/Leg/actor_xcube.c
+      folders: []
+    - name: Doc
+      files:
+        - path: ../X-CUBE-AI/App/network_generate_report.txt
+      folders: []
+    - name: Lib
+      files:
+        - path: ../Middlewares/ST/AI/Lib/NetworkRuntime1020_CM4_Keil.lib
       folders: []
 dependenceList: []
 outDir: build
@@ -305,10 +324,13 @@ targets:
         - ../Middlewares/SEGGER_RTT/Config
         - ../Middlewares/SEGGER_RTT/RTT
         - ../User/Leg/inc
+        - ../Middlewares/ST/AI/Inc
+        - ../X-CUBE-AI/App
         - .cmsis/include
         - ../MDK-ARM/RTE/_Horizon_Infantry
       libList: []
     excludeList: []
+    settings: {}
     toolchain: AC6
     toolchainConfigMap:
       AC6:
@@ -320,6 +342,7 @@ targets:
           afterBuildTasks: []
           asm-compiler:
             $use: asm-auto
+            defines: []
             misc-controls: ""
           beforeBuildTasks: []
           c/cpp-compiler:
@@ -327,7 +350,7 @@ targets:
             language-cpp: c++03
             link-time-optimization: false
             one-elf-section-per-function: true
-            optimization: level-0
+            optimization: level-3
             short-enums#wchar: true
             warnings: ac5-like-warnings
           global:
@@ -341,7 +364,7 @@ targets:
             ro-base: ""
             rw-base: ""
             xo-base: ""
-        scatterFilePath: ""
+        scatterFilePath: Horizon_Infantry.sct
         storageLayout:
           RAM:
             - id: 1
@@ -415,7 +438,7 @@ targets:
                 size: "0x0"
                 startAddr: "0x0"
               tag: IROM
-        useCustomScatterFile: false
+        useCustomScatterFile: true
     uploadConfigMap:
       JLink:
         baseAddr: ""

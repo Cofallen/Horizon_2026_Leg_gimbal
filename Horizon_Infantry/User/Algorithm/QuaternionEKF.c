@@ -66,6 +66,7 @@ void IMU_QuaternionEKF_Init(float process_noise1, float process_noise2, float me
     QEKF_INS.ErrorCount = 0;
     QEKF_INS.UpdateCount = 0;
 		QEKF_INS.dt = dt;
+        QEKF_INS.accLPFcoef = lpf;
     
 	if (lambda > 1)
     {
