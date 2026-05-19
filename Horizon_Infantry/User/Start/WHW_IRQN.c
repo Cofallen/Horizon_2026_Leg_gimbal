@@ -68,6 +68,7 @@
 #include "Gimbal_Task.h"
 #include "ppo_actor.h"
 #include "actor_xcude.h"
+#include "Vision.h"
 
 uint8_t move_G, move_S, move_C, move_P;
 float t1,t2,dt;
@@ -105,8 +106,9 @@ void StartMoveTask(void const * argument)
         gimbal_task(&RUI_V_CONTAL, &ALL_MOTOR, &IMU_Data);
         // osDelay(1);
 
-        
-        osDelay(2);
+        // Vision_Tx_Data(IMU_Data.pitch, IMU_Data.yaw,
+        //                RUI_V_CONTAL.DWT_TIME.Move_Dtime, 1, 1);
+        osDelay(1);
     }
 }
 
@@ -289,10 +291,8 @@ void BSP_UART_IRQHandler(UART_HandleTypeDef *huart)
 
     if(huart->Instance ==USART6)//裁判系统串口
     {
-		uint8_t *next_buf = (pData == Referee_Rx_Buf[0]) ? Referee_Rx_Buf[1] : Referee_Rx_Buf[0];
-        HAL_UARTEx_ReceiveToIdle_DMA(huart, next_buf, REFEREE_RXFRAME_LENGTH);
-        __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);//关闭 DMA 半传中断
         Referee_System_Frame_Update(pData, 256);
+        __HAL_DMA_DISABLE_IT(huart->hdmarx, DMA_IT_HT);
     }
 
     if(huart->Instance ==USART1)//调试串口

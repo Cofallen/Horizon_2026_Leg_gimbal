@@ -105,12 +105,12 @@ uint8_t gimbal_task(CONTAL_Typedef *CONTAL, MOTOR_Typedef *MOTOR, IMU_Data_t *IM
         DJI_Current_Ctrl(&hcan1, 0x200, 0, 0, 0, 0);
     }
     
-    VOFA_justfloat(MOTOR->DM4310_Yaw.PID_P.Err,
-                    IMU_Data.YawTotalAngle,
-                    MOTOR->DM4310_Yaw.DATA.Aim,
-                    IMU_Data.pitch,
-                    MOTOR->DM4310_Pitch.DATA.Aim,
-                    0,0,0,0,0);
+    // VOFA_justfloat(MOTOR->DM4310_Yaw.PID_P.Err,
+    //                 IMU_Data.YawTotalAngle,
+    //                 MOTOR->DM4310_Yaw.DATA.Aim,
+    //                 IMU_Data.pitch,
+    //                 MOTOR->DM4310_Pitch.DATA.Aim,
+    //                 0,0,0,0,0);
 
     return 0;
 }

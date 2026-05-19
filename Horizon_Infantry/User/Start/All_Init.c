@@ -70,7 +70,7 @@ float voltage;
 //功率限制
 model_t model;
 
-uint8_t Referee_Rx_Buf[2][REFEREE_RXFRAME_LENGTH];
+uint8_t Referee_Rx_Buf[REFEREE_RXFRAME_LENGTH];
 
 uint8_t flag2;
 void Everying_Init(void)
@@ -114,8 +114,7 @@ void Everying_Init(void)
     HAL_DMA_Init(&hdma_usart6_tx);
     HAL_UART_DMAStop(&huart6);
     __HAL_UART_ENABLE_IT(&huart6, UART_IT_IDLE);//裁判系统串口
-    HAL_UART_Receive_DMA(&huart6,(uint8_t *)ALL_RX.Data,255);
-	
+	HAL_UARTEx_ReceiveToIdle_DMA(&huart6, Referee_Rx_Buf, REFEREE_RXFRAME_LENGTH);//裁判系统串口
 	//USB初始化
 	MX_USB_DEVICE_Init();
 
