@@ -330,7 +330,8 @@ targets:
         - ../MDK-ARM/RTE/_Horizon_Infantry
       libList: []
     excludeList: []
-    settings: {}
+    settings:
+      debugger: cortex-debug
     toolchain: AC6
     toolchainConfigMap:
       AC6:

@@ -182,6 +182,6 @@ typedef union  // 使用共用体整合数据
 void RUI_F_DUBS_Resovled(uint8_t* Data, DBUS_Typedef *RUI_V_DBUS);
 // 鼠标滤波
 float OneFilter(float last , float now , float thresholdValue);
-uint8_t RUI_F_KEY_STATUS(uint64_t  KEY , uint8_t PRESS_TIME);
+uint8_t RUI_F_KEY_STATUS(uint8_t key, uint8_t *t);
 
 #endif

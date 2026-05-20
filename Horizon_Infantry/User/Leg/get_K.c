@@ -29,7 +29,9 @@ void Board_to_board_recv(boardRxData_t *recv, uint8_t *data)
     recv->dataNeaten.s2 = (packed >> 51) & 0x03;
     recv->dataNeaten.mouseL = (packed >> 53) & 0x03;
     recv->dataNeaten.mouseR = (packed >> 55) & 0x03;
-
+		recv->dataNeaten.mouse_X_FIT = (float)((packed >> 57) & 0x03) - 1.0f;
+    recv->dataNeaten.mouse_Y_FIT = (float)((packed >> 59) & 0x03) - 1.0f;
+		
     WHW_V_DBUS.Remote.S1_u8 = recv->dataNeaten.s1;
     WHW_V_DBUS.Remote.S1_u8 = recv->dataNeaten.s1;
     WHW_V_DBUS.Remote.CH2_int16 = recv->dataNeaten.ch2;
