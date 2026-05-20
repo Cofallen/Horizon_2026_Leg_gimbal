@@ -69,6 +69,7 @@
 #include "ppo_actor.h"
 #include "actor_xcude.h"
 #include "Vision.h"
+#include "Shoot_Task.h"
 
 uint8_t move_G, move_S, move_C, move_P;
 float t1,t2,dt;
@@ -164,10 +165,9 @@ void StartRootTask(void const * argument)
 {
     portTickType currentTimeRoot;
     currentTimeRoot = xTaskGetTickCount();
-
-    // //使用基准电压来校准
-    // init_vrefint_reciprocal();
     // AIActor_Init(&g_actor);
+
+    Shooter_Init(&shooter, &ALL_MOTOR, &VisionRxData);
 
     for(;;)
     {
@@ -175,6 +175,7 @@ void StartRootTask(void const * argument)
         // ppo_actor_forward(obs, action);
         // AIActor_Run(&g_actor, obs);
         // action[0] = AIActor_GetOutput(&g_actor, 0);
+        Shooter_Update(&shooter, &WHW_V_DBUS);
         osDelay(1);
     }
 }

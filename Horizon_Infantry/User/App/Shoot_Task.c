@@ -22,6 +22,46 @@ typedef enum
 
 } Shoot_Event_e;
 
+void MOTOR_PID_Shoot_INIT(MOTOR_Typedef *motor)
+{
+    float PID_S_Shoot_L[3] = {15.0f, 0.0f, 0.0f};
+    float PID_P_Shoot_L[3] = {0.0f, 0.0f, 0.0f};
+
+    PID_Init(&motor->DJI_3508_Shoot_L.PID_S, 10000.0f, 0.0f, 
+              PID_S_Shoot_L, 0.0f, 0.0f, 
+              0.0f, 0.0f, 0, 
+              Integral_Limit);
+    PID_Init(&motor->DJI_3508_Shoot_L.PID_P, 1000.0f, 50.0f, 
+              PID_P_Shoot_L, 0.0f, 0.0f, 
+              0.0f, 0.0f, 0, 
+              Integral_Limit);
+    
+    float PID_S_Shoot_R[3] = {15.0f, 0.0f, 0.0f};
+    float PID_P_Shoot_R[3] = {0.0f, 0.0f, 0.0f};
+
+    PID_Init(&motor->DJI_3508_Shoot_R.PID_S, 10000.0f, 0.0f, 
+              PID_S_Shoot_R, 0.0f, 0.0f, 
+              0.0f, 0.0f, 0, 
+              Integral_Limit);
+    PID_Init(&motor->DJI_3508_Shoot_R.PID_P, 1000.0f, 50.0f, 
+              PID_P_Shoot_R, 0.0f, 0.0f, 
+              0.0f, 0.0f, 0, 
+              Integral_Limit);
+
+    float PID_S_Shoot_G[3] = {15.0f, 0.0f, 0.0f};
+    float PID_P_Shoot_G[3] = {1.0f, 0.01f, 0.0f};
+
+    PID_Init(&motor->DJI_3508_Shoot_G.PID_S, 10000.0f, 0.0f, 
+              PID_S_Shoot_G, 0.0f, 0.0f, 
+              0.0f, 0.0f, 0, 
+              Integral_Limit);
+    PID_Init(&motor->DJI_3508_Shoot_G.PID_P, 1000.0f, 50.0f, 
+              PID_P_Shoot_G, 0.0f, 0.0f, 
+              0.0f, 0.0f, 0, 
+              Integral_Limit);
+}
+
+
 static Shoot_Event_e Shooter_GetEvent(Shooter_t *s)
 {
     Shoot_Event_e event = SHOOT_EVENT_NONE;
@@ -125,7 +165,7 @@ static void Shooter_AutoAim(Shooter_t *s)
     }
 }
 
-static void Shooter_Output(Shooter_t *s)
+static void Shooter_Output(Shooter_t *s, MOTOR_Typedef *MOTOR)
 {
     float friction = 0;
 
@@ -140,6 +180,25 @@ static void Shooter_Output(Shooter_t *s)
 
     s->motor->DJI_3508_Shoot_G.DATA.Aim =
         s->ctrl.target_angle;
+
+    // PID
+    PID_Calculate(&MOTOR->DJI_3508_Shoot_L.PID_S, 
+                   MOTOR->DJI_3508_Shoot_L.DATA.Speed_now,
+                   MOTOR->DJI_3508_Shoot_L.DATA.Aim);
+
+    PID_Calculate(&MOTOR->DJI_3508_Shoot_R.PID_S,
+                   MOTOR->DJI_3508_Shoot_R.DATA.Speed_now,
+                   MOTOR->DJI_3508_Shoot_R.DATA.Aim);
+
+    PID_Calculate(&MOTOR->DJI_3508_Shoot_G.PID_P, 
+                   MOTOR->DJI_3508_Shoot_G.DATA.Angle_Infinite,
+                   MOTOR->DJI_3508_Shoot_G.DATA.Aim);
+    PID_Calculate(&MOTOR->DJI_3508_Shoot_G.PID_S,
+                   MOTOR->DJI_3508_Shoot_G.DATA.Speed_now,
+                   MOTOR->DJI_3508_Shoot_G.PID_P.Output);
+
+    DJI_Current_Ctrl(&hcan1, 0x200, 0, 0, MOTOR->DJI_3508_Shoot_G.PID_S.Output, 0);
+    DJI_Current_Ctrl(&hcan2, 0x200, 0, 0, 0, 0);
 }
 
 void Shooter_Init(
@@ -165,6 +224,8 @@ void Shooter_Init(
     s->ctrl.auto_aim_enable = 0;
 
     s->ctrl.jam_cnt = 0;
+
+    MOTOR_PID_Shoot_INIT(motor);
 }
 
 void Shooter_Update(Shooter_t *s, DBUS_Typedef *dbus)
@@ -173,7 +234,7 @@ void Shooter_Update(Shooter_t *s, DBUS_Typedef *dbus)
 
     if (Shooter_IsOverHeat(&User_data))
     {
-        Shooter_Output(s);
+        Shooter_Output(s, &ALL_MOTOR);
         return;
     }
 
@@ -182,7 +243,7 @@ void Shooter_Update(Shooter_t *s, DBUS_Typedef *dbus)
         s->ctrl.target_angle =
             s->motor->DJI_3508_Shoot_G.DATA.Angle_Infinite;
 
-        Shooter_Output(s);
+        Shooter_Output(s, &ALL_MOTOR);
         return;
     }
 
@@ -210,5 +271,5 @@ void Shooter_Update(Shooter_t *s, DBUS_Typedef *dbus)
 
     Shooter_AutoAim(s);
 
-    Shooter_Output(s);
+    Shooter_Output(s, &ALL_MOTOR);
 }

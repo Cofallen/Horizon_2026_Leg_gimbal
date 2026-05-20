@@ -39,6 +39,8 @@ typedef struct
 
 } Shooter_t;
 
+extern Shooter_t shooter;
+
 void Shooter_Init(
     Shooter_t *s,
     MOTOR_Typedef *motor,
