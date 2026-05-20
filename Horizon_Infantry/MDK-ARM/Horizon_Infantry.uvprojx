@@ -314,7 +314,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>4</Optim>
+            <Optim>0</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -768,6 +768,11 @@
               <FileName>Shoot_Task.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User\App\inc\Shoot_Task.h</FilePath>
+            </File>
+            <File>
+              <FileName>Heat_Task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\Heat_Task.c</FilePath>
             </File>
           </Files>
         </Group>

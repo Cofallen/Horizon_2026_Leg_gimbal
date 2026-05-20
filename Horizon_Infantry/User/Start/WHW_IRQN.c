@@ -175,7 +175,7 @@ void StartRootTask(void const * argument)
         // ppo_actor_forward(obs, action);
         // AIActor_Run(&g_actor, obs);
         // action[0] = AIActor_GetOutput(&g_actor, 0);
-        Shooter_Update(&shooter, &WHW_V_DBUS);
+        Shooter_Update(&shooter, &WHW_V_DBUS, RUI_V_CONTAL.DWT_TIME.Move_Dtime);
         osDelay(1);
     }
 }

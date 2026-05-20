@@ -23,7 +23,12 @@ typedef struct
 
     uint16_t mouse_press_cnt;
 
+    uint8_t single_lock; 
+
     uint16_t jam_cnt;
+
+    float last_angle;
+    float accum_angle;
 
 } Shooter_Control_t;
 
@@ -46,6 +51,6 @@ void Shooter_Init(
     MOTOR_Typedef *motor,
     Vision_Data_t *vision);
 
-void Shooter_Update(
-    Shooter_t *s,
-    DBUS_Typedef *dbus);
+void Shooter_Update(Shooter_t *s, DBUS_Typedef *dbus, float dt);
+uint8_t Shooter_IsFired(Shooter_t *s, MOTOR_Typedef *MOTOR);
+

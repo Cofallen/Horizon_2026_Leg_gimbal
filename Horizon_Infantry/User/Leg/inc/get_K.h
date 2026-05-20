@@ -24,8 +24,10 @@ typedef union
         uint8_t s2;
         uint8_t mouseL;
         uint8_t mouseR;
-			  float mouse_X_FIT;
-			  float mouse_Y_FIT;
+        float mouse_X_FIT;
+        float mouse_Y_FIT;
+        uint8_t robot_level;
+        uint8_t status;
     } dataNeaten;
     // uint8_t rxData[8];
 }boardRxData_t;

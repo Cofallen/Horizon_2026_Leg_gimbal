@@ -1,8 +1,11 @@
 #include "Shoot_Task.h"
 #include <math.h>
+#include "get_K.h"
+#include "Heat_Task.h"
 
-#define DBUS_MID     3
-#define DBUS_DOWN    1
+#define DBUS_DOWN     2
+#define DBUS_UP    1
+#define DBUS_MID    3
 
 #define FRICTION_SPEED         6300.0f
 
@@ -51,104 +54,45 @@ void MOTOR_PID_Shoot_INIT(MOTOR_Typedef *motor)
     float PID_S_Shoot_G[3] = {15.0f, 0.0f, 0.0f};
     float PID_P_Shoot_G[3] = {1.0f, 0.01f, 0.0f};
 
-    PID_Init(&motor->DJI_3508_Shoot_G.PID_S, 10000.0f, 0.0f, 
+    PID_Init(&motor->DJI_3508_Shoot_G.PID_S, 15000.0f, 0.0f, 
               PID_S_Shoot_G, 0.0f, 0.0f, 
               0.0f, 0.0f, 0, 
               Integral_Limit);
-    PID_Init(&motor->DJI_3508_Shoot_G.PID_P, 1000.0f, 50.0f, 
+    PID_Init(&motor->DJI_3508_Shoot_G.PID_P, 3000.0f, 50.0f, 
               PID_P_Shoot_G, 0.0f, 0.0f, 
               0.0f, 0.0f, 0, 
               Integral_Limit);
 }
 
 
-static Shoot_Event_e Shooter_GetEvent(Shooter_t *s)
+static Shoot_Event_e Shooter_GetEvent(Shooter_t *s, boardRxData_t *boardRxData)
 {
-    Shoot_Event_e event = SHOOT_EVENT_NONE;
-
     uint8_t sw = s->dbus->Remote.S1_u8;
-
-    if (sw == DBUS_DOWN &&
-        s->ctrl.last_switch != DBUS_DOWN)
-    {
-        event = SHOOT_EVENT_SINGLE;
-    }
 
     s->ctrl.last_switch = sw;
 
-    uint8_t mouse_l = s->dbus->Mouse.L_State;
+    if (g_heat.heat <= 20.0f)
+        return SHOOT_EVENT_NONE;
 
-    if (mouse_l && !s->ctrl.last_mouse_l)
-    {
-        s->ctrl.mouse_press_cnt = 0;
+    if (sw == DBUS_UP || boardRxData->dataNeaten.mouseL == 1)
+        return SHOOT_EVENT_SINGLE;
 
-        event = SHOOT_EVENT_SINGLE;
-    }
+    if (sw == DBUS_DOWN || boardRxData->dataNeaten.mouseL == 2)
+        return SHOOT_EVENT_BURST;
 
-    if (mouse_l)
-    {
-        s->ctrl.mouse_press_cnt++;
-
-        if (s->ctrl.mouse_press_cnt > MOUSE_BURST_TIME)
-        {
-            event = SHOOT_EVENT_BURST;
-        }
-    }
-    else
-    {
-        s->ctrl.mouse_press_cnt = 0;
-    }
-
-    s->ctrl.last_mouse_l = mouse_l;
-
-    uint8_t mouse_r = s->dbus->Mouse.R_State;
-
-    s->ctrl.auto_aim_enable = mouse_r;
-
-    return event;
-}
-
-static uint8_t Shooter_IsOverHeat(User_Data_T *user)
-{
-#ifdef SHOOT_HEAT_ENABLE
-
-    float heat_left =
-        user->robot_status.shooter_barrel_heat_limit
-      - user->power_heat_data.shooter_17mm_barrel_heat;
-
-    return (heat_left < 40);
-
-#else
-
-    return 0;
-
-#endif
-}
-
-static uint8_t Shooter_IsJam(Shooter_t *s)
-{
-    float err = fabsf(
-        s->ctrl.target_angle
-      - s->motor->DJI_3508_Shoot_G.DATA.Angle_Infinite);
-
-    if (err > s->ctrl.single_angle * JAM_ERROR_THRESHOLD
-        &&
-        fabsf((float)s->motor->DJI_3508_Shoot_G.DATA.Speed_now)
-        < JAM_SPEED_THRESHOLD)
-    {
-        s->ctrl.jam_cnt++;
-    }
-    else
-    {
-        s->ctrl.jam_cnt = 0;
-    }
-
-    return (s->ctrl.jam_cnt > JAM_COUNT_THRESHOLD);
+    if (sw == DBUS_MID || boardRxData->dataNeaten.mouseL == 0)
+        return SHOOT_EVENT_NONE;
+        
+    return SHOOT_EVENT_NONE;
 }
 
 static void Shooter_FireSingle(Shooter_t *s)
 {
+    if (s->ctrl.single_lock)
+        return;
+
     s->ctrl.target_angle -= s->ctrl.single_angle;
+    s->ctrl.single_lock = 1;
 }
 
 static void Shooter_FireBurst(Shooter_t *s)
@@ -156,23 +100,16 @@ static void Shooter_FireBurst(Shooter_t *s)
     s->ctrl.target_angle -= s->ctrl.single_angle;
 }
 
-static void Shooter_AutoAim(Shooter_t *s)
+static void Shooter_FireStop(Shooter_t *s, MOTOR_Typedef *MOTOR)
 {
-    if (s->ctrl.auto_aim_enable &&
-        s->vision->target_visible)
-    {
-        s->ctrl.target_angle -= s->ctrl.single_angle;
-    }
+    s->ctrl.target_angle = MOTOR->DJI_3508_Shoot_G.DATA.Angle_Infinite;
+    s->ctrl.single_lock = 0;
 }
+
 
 static void Shooter_Output(Shooter_t *s, MOTOR_Typedef *MOTOR)
 {
-    float friction = 0;
-
-    if (!Shooter_IsOverHeat(&User_data))
-    {
-        friction = FRICTION_SPEED;
-    }
+    float friction = FRICTION_SPEED;
 
     s->motor->DJI_3508_Shoot_L.DATA.Aim = friction;
 
@@ -210,14 +147,14 @@ void Shooter_Init(
 
     s->vision = vision;
 
-    s->ctrl.single_angle = 36864.0f;
+    s->ctrl.single_angle = 36864.0f * 2.0f;
 
     s->ctrl.target_angle =
         s->motor->DJI_3508_Shoot_G.DATA.Angle_Infinite;
 
     s->ctrl.last_mouse_l = 0;
 
-    s->ctrl.last_switch = DBUS_MID;
+    s->ctrl.last_switch = DBUS_DOWN;
 
     s->ctrl.mouse_press_cnt = 0;
 
@@ -226,42 +163,30 @@ void Shooter_Init(
     s->ctrl.jam_cnt = 0;
 
     MOTOR_PID_Shoot_INIT(motor);
+    Heat_Init(boardRxData.dataNeaten.robot_level);
 }
 
-void Shooter_Update(Shooter_t *s, DBUS_Typedef *dbus)
+void Shooter_Update(Shooter_t *s, DBUS_Typedef *dbus, float dt)
 {
     s->dbus = dbus;
 
-    if (Shooter_IsOverHeat(&User_data))
-    {
-        Shooter_Output(s, &ALL_MOTOR);
-        return;
-    }
-
-    if (Shooter_IsJam(s))
-    {
-        s->ctrl.target_angle =
-            s->motor->DJI_3508_Shoot_G.DATA.Angle_Infinite;
-
-        Shooter_Output(s, &ALL_MOTOR);
-        return;
-    }
+    Heat_Update(boardRxData.dataNeaten.robot_level, dt);  
 
     Shoot_Event_e event =
-        Shooter_GetEvent(s);
+        Shooter_GetEvent(s, &boardRxData);
 
     switch (event)
     {
         case SHOOT_EVENT_SINGLE:
-
             Shooter_FireSingle(s);
-
             break;
 
         case SHOOT_EVENT_BURST:
-
             Shooter_FireBurst(s);
+            break;
 
+        case SHOOT_EVENT_NONE:
+            Shooter_FireStop(s, &ALL_MOTOR);
             break;
 
         default:
@@ -269,7 +194,31 @@ void Shooter_Update(Shooter_t *s, DBUS_Typedef *dbus)
             break;
     }
 
-    Shooter_AutoAim(s);
-
     Shooter_Output(s, &ALL_MOTOR);
+}
+
+
+static inline float angle_diff(float now, float last)
+{
+    float diff = now - last;
+    return diff;
+}
+
+uint8_t Shooter_IsFired(Shooter_t *s, MOTOR_Typedef *MOTOR)
+{
+    float now = MOTOR->DJI_3508_Shoot_G.DATA.Angle_Infinite;
+
+    float delta = angle_diff(now, s->ctrl.last_angle);
+
+    s->ctrl.accum_angle += fabsf(delta);
+    s->ctrl.last_angle = now;
+
+    // 达到一个弹丸角度 => 认为发射
+    if (s->ctrl.accum_angle >= s->ctrl.single_angle)
+    {
+        s->ctrl.accum_angle = 0;
+        return 1;
+    }
+
+    return 0;
 }
