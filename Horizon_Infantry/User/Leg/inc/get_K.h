@@ -22,6 +22,8 @@ typedef union
         int16_t pitch;  // 100倍
         uint8_t s1;
         uint8_t s2;
+        uint8_t mouseL;
+        uint8_t mouseR;
     } dataNeaten;
     // uint8_t rxData[8];
 }boardRxData_t;

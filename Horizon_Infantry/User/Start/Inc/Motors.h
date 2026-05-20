@@ -11,7 +11,7 @@ typedef struct
 
     DJI_MOTOR_Typedef DJI_3508_Shoot_L;
     DJI_MOTOR_Typedef DJI_3508_Shoot_R;
-    DJI_MOTOR_Typedef DJI_3508_Shoot_M;
+    DJI_MOTOR_Typedef DJI_3508_Shoot_G;
 
 }MOTOR_Typedef;
 

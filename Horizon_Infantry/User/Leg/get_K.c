@@ -27,10 +27,14 @@ void Board_to_board_recv(boardRxData_t *recv, uint8_t *data)
     recv->dataNeaten.pitch = (int16_t)((packed >> 33) & 0xFFFF);
     recv->dataNeaten.s1 = (packed >> 49) & 0x03;
     recv->dataNeaten.s2 = (packed >> 51) & 0x03;
-
+    recv->dataNeaten.mouseL = (packed >> 53) & 0x03;
+    recv->dataNeaten.mouseR = (packed >> 55) & 0x03;
 
     WHW_V_DBUS.Remote.S1_u8 = recv->dataNeaten.s1;
     WHW_V_DBUS.Remote.S1_u8 = recv->dataNeaten.s1;
     WHW_V_DBUS.Remote.CH2_int16 = recv->dataNeaten.ch2;
     WHW_V_DBUS.Remote.CH3_int16 = recv->dataNeaten.ch3;
+    WHW_V_DBUS.Remote.Dial_int16 = recv->dataNeaten.dir;
+    WHW_V_DBUS.Mouse.L_State = recv->dataNeaten.mouseL;
+    WHW_V_DBUS.Mouse.R_State = recv->dataNeaten.mouseR;
 }

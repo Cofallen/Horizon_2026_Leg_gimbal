@@ -26,6 +26,7 @@ typedef struct
       float VisionTime;
       uint16_t OffCounter; // 在线检测
       uint8_t  isOnline;
+      uint8_t target_visible;
     } Data;
 }VisionRxDataUnion;
 
